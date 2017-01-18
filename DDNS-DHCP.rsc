@@ -1,9 +1,18 @@
+# https://github.com/karrots/ROS-DDNS
 #TODO
 # Clean up old entries if computer name changes between binds.
 
 # Domain to be added to your DHCP-clients hostname
 :local topdomain;
-:set topdomain "domain.name";
+/ip dhcp-server network;
+:do {
+	:set topdomain [get [find where ($leaseActIP in address)] domain];
+} on-error={
+	:set topdomain "default.domain.name"
+}
+:if ([:len $topdomain] > 0) do={
+	:set topdomain ("." . $topdomain)
+};
 
 # Set TTL to use for DDNS entries
 :local ttl;
@@ -27,8 +36,8 @@
 
 # Set the isFree test variable to true. Assemble the DNS entry to be created later.
 		:set isFree "true";
-		:set FQDN ([get [find where active-mac-address=$leaseActMAC] host-name] . "." . $topdomain);
-		
+		:set FQDN ([get [find where active-mac-address=$leaseActMAC] host-name] . $topdomain);
+
 # Check if the DNS entry exists already. Then verify we are not about to over write
 # another entry that isn't ours. Test using the $hostvalidationtoken
 		/ip dns static;
